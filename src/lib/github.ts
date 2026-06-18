@@ -148,7 +148,7 @@ export async function getRepoContributors(
     `/repos/${owner}/${repo}/contributors`,
     { token, params: { per_page: limit } },
   )
-  return data ?? []
+  return Array.isArray(data) ? data : []
 }
 
 export async function getRepoIssues(
@@ -163,7 +163,7 @@ export async function getRepoIssues(
     { token, params: { state, per_page: perPage, sort: 'created', direction: 'desc' } },
   )
   // Filter out PRs (GitHub's /issues endpoint also returns PRs).
-  return (data ?? []).filter((i) => !i.pull_request)
+  return Array.isArray(data) ? data.filter((i) => !i.pull_request) : []
 }
 
 export async function getRepoCommits(
@@ -176,7 +176,7 @@ export async function getRepoCommits(
     `/repos/${owner}/${repo}/commits`,
     { token, params: { per_page: perPage } },
   )
-  return data ?? []
+  return Array.isArray(data) ? data : []
 }
 
 export async function getRepoCommitActivity(
@@ -189,7 +189,7 @@ export async function getRepoCommitActivity(
     { token },
   )
   // This endpoint can return 202 with an empty body while stats are computed.
-  return data ?? []
+  return Array.isArray(data) ? data : []
 }
 
 export interface StarEvent {
@@ -237,7 +237,7 @@ export async function getUserRepos(
     token,
     params: { sort, per_page: perPage },
   })
-  return data ?? []
+  return Array.isArray(data) ? data : []
 }
 
 export async function getOrgRepos(
@@ -250,7 +250,7 @@ export async function getOrgRepos(
     token,
     params: { sort, per_page: perPage, type: 'public' },
   })
-  return data ?? []
+  return Array.isArray(data) ? data : []
 }
 
 // ---------- Search ----------
