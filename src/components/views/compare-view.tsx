@@ -56,7 +56,7 @@ export function CompareView() {
 
   const queries = useQueries({
     queries: compareList.map((entry) => ({
-      queryKey: ['compare-repo', entry.full_name, settings.githubToken],
+      queryKey: ['compare-repo', entry.full_name, !!settings.githubToken],
       queryFn: async () => {
         const repo = await getRepo(entry.owner, entry.repo, settings.githubToken || undefined)
         let contributorsCount: number | null = null
@@ -108,7 +108,7 @@ export function CompareView() {
       const value =
         key === 'stars' ? item.repo.stargazers_count
         : key === 'forks' ? item.repo.forks_count
-        : key === 'issues' ? item.repo.open_issues_count
+        : key === 'issues' ? -item.repo.open_issues_count
         : key === 'contributors' ? item.contributorsCount ?? 0
         : -new Date(item.repo.pushed_at).getTime()
       if (!best || value > best.value) {

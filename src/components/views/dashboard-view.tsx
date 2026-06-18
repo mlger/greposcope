@@ -99,59 +99,88 @@ function Dashboard({
 }) {
   // Parallel data fetching
   const repoQuery = useQuery({
-    queryKey: ['repo', owner, repo, token],
+    queryKey: ['repo', owner, repo, !!token],
     queryFn: () => getRepo(owner, repo, token || undefined),
     staleTime: 60_000,
     retry: false,
   })
 
   const languagesQuery = useQuery({
-    queryKey: ['repo-languages', owner, repo, token],
+    queryKey: ['repo-languages', owner, repo, !!token],
     queryFn: () => getRepoLanguages(owner, repo, token || undefined),
     staleTime: 5 * 60_000,
     retry: false,
   })
 
   const contributorsQuery = useQuery({
-    queryKey: ['repo-contributors', owner, repo, token],
+    queryKey: ['repo-contributors', owner, repo, !!token],
     queryFn: () => getRepoContributors(owner, repo, token || undefined, 100),
     staleTime: 5 * 60_000,
     retry: false,
   })
 
   const issuesOpenQuery = useQuery({
-    queryKey: ['repo-issues-open', owner, repo, token],
+    queryKey: ['repo-issues-open', owner, repo, !!token],
     queryFn: () => getRepoIssues(owner, repo, 'open', token || undefined, 100),
     staleTime: 60_000,
     retry: false,
   })
   const issuesClosedQuery = useQuery({
-    queryKey: ['repo-issues-closed', owner, repo, token],
+    queryKey: ['repo-issues-closed', owner, repo, !!token],
     queryFn: () => getRepoIssues(owner, repo, 'closed', token || undefined, 100),
     staleTime: 60_000,
     retry: false,
   })
 
   const commitsQuery = useQuery({
-    queryKey: ['repo-commits', owner, repo, token],
+    queryKey: ['repo-commits', owner, repo, !!token],
     queryFn: () => getRepoCommits(owner, repo, token || undefined, 100),
     staleTime: 60_000,
     retry: false,
   })
 
   const activityQuery = useQuery({
-    queryKey: ['repo-activity', owner, repo, token],
+    queryKey: ['repo-activity', owner, repo, !!token],
     queryFn: () => getRepoCommitActivity(owner, repo, token || undefined),
     staleTime: 5 * 60_000,
     retry: false,
   })
 
   const starsQuery = useQuery({
-    queryKey: ['repo-stars', owner, repo, token],
+    queryKey: ['repo-stars', owner, repo, !!token],
     queryFn: () => getStargazerSample(owner, repo, token || undefined, 100),
     staleTime: 5 * 60_000,
     retry: false,
   })
+
+  const aiInput = React.useMemo(() => {
+    const repoData = repoQuery.data
+    if (!repoData) return null
+    return {
+      repo: repoData,
+      languagePct: languagesQuery.data ? languagePercentages(languagesQuery.data) : [],
+      topContributors:
+        contributorsQuery.data?.slice(0, 5).map((c) => ({
+          login: c.login,
+          contributions: c.contributions,
+        })) ?? [],
+      recentCommitCount:
+        activityQuery.data?.slice(-4).reduce((a, w) => a + w.total, 0) ?? 0,
+      openIssues: issuesOpenQuery.data?.length ?? repoData.open_issues_count,
+      closedIssues: issuesClosedQuery.data?.length ?? 0,
+      daysSincePush: Math.max(
+        0,
+        (Date.now() - new Date(repoData.pushed_at).getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    }
+  }, [
+    repoQuery.data,
+    languagesQuery.data,
+    contributorsQuery.data,
+    activityQuery.data,
+    issuesOpenQuery.data,
+    issuesClosedQuery.data,
+  ])
 
   function refetchAll() {
     repoQuery.refetch()
@@ -311,27 +340,7 @@ function Dashboard({
                 disabled: r.disabled,
               })}
             />
-            <AiSummaryCard
-              input={{
-                repo: r,
-                languagePct: languagesQuery.data
-                  ? languagePercentages(languagesQuery.data)
-                  : [],
-                topContributors:
-                  contributorsQuery.data?.slice(0, 5).map((c) => ({
-                    login: c.login,
-                    contributions: c.contributions,
-                  })) ?? [],
-                recentCommitCount:
-                  activityQuery.data?.slice(-4).reduce((a, w) => a + w.total, 0) ?? 0,
-                openIssues: issuesOpenQuery.data?.length ?? r.open_issues_count,
-                closedIssues: issuesClosedQuery.data?.length ?? 0,
-                daysSincePush: Math.max(
-                  0,
-                  (Date.now() - new Date(r.pushed_at).getTime()) / (1000 * 60 * 60 * 24),
-                ),
-              }}
-            />
+            {aiInput && <AiSummaryCard input={aiInput} />}
           </div>
 
           <Card>
@@ -427,6 +436,12 @@ function Dashboard({
               <CardContent>
                 {activityQuery.isLoading ? (
                   <Skeleton className="h-[240px] w-full" />
+                ) : activityQuery.isError ? (
+                  <div className="grid h-[240px] place-items-center text-sm text-muted-foreground">
+                    {activityQuery.error instanceof GitHubError && activityQuery.error.status === 202
+                      ? 'GitHub is computing statistics for this repository. Try refreshing in a moment.'
+                      : 'Could not load commit activity.'}
+                  </div>
                 ) : (
                   <CommitActivityChart data={buildActivityData(activityQuery.data ?? [])} />
                 )}
@@ -824,7 +839,7 @@ function CommitsTable({
                       {c.commit.message.split('\n')[0]}
                     </a>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      by {c.commit.author.name} · {formatRelativeTime(c.commit.author.date)}
+                      by {c.commit.author?.name ?? 'Unknown'} · {c.commit.author?.date ? formatRelativeTime(c.commit.author.date) : ''}
                     </p>
                   </div>
                 </div>
@@ -868,13 +883,19 @@ function buildStarsData(
   const sorted = [...events].sort(
     (a, b) => new Date(a.starred_at).getTime() - new Date(b.starred_at).getTime(),
   )
-  const first = new Date(sorted[0].starred_at).getTime()
+  const firstTime = new Date(sorted[0].starred_at).getTime()
+  const lastTime = new Date(sorted[sorted.length - 1].starred_at).getTime()
+  const spansMultipleYears = lastTime - firstTime > 365 * 24 * 60 * 60 * 1000
   const offset = totalStars - sorted.length // approximate starting star count
   let cumulative = Math.max(0, offset)
   return sorted.map((e) => {
     cumulative += 1
     return {
-      date: new Date(e.starred_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: new Date(e.starred_at).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        ...(spansMultipleYears && { year: '2-digit' }),
+      }),
       stars: 1,
       cumulative,
     }
@@ -894,7 +915,7 @@ function buildActivityData(
 }
 
 function buildCommitHeatstripData(
-  commits: { commit: { author: { date: string } } }[],
+  commits: { commit: { author: { date: string } | null } }[],
 ): { date: string; commits: number }[] {
   const byDay = new Map<string, number>()
   const today = new Date()
@@ -904,8 +925,8 @@ function buildCommitHeatstripData(
     byDay.set(d.toISOString().slice(0, 10), 0)
   }
   for (const c of commits) {
-    const day = c.commit.author.date.slice(0, 10)
-    if (byDay.has(day)) byDay.set(day, (byDay.get(day) ?? 0) + 1)
+    const day = c.commit.author?.date.slice(0, 10)
+    if (day && byDay.has(day)) byDay.set(day, (byDay.get(day) ?? 0) + 1)
   }
   return Array.from(byDay.entries()).map(([date, commits]) => ({
     date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),

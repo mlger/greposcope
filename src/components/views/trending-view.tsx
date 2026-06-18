@@ -53,7 +53,7 @@ export function TrendingView() {
   const [language, setLanguage] = React.useState<string>('')
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['trending', since, language],
+    queryKey: ['trending', since, language, !!settings.githubToken],
     queryFn: () =>
       getTrendingRepos({
         since,

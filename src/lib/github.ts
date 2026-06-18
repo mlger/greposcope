@@ -112,6 +112,15 @@ export async function ghFetch<T>(
     throw new GitHubError(message, res.status, Number(remaining), Number(reset))
   }
 
+  // GitHub returns 202 while stats are being computed asynchronously (e.g. commit_activity).
+  // Treat it as a retriable error so callers can surface a "computing" state instead of empty data.
+  if (res.status === 202) {
+    throw new GitHubError(
+      'GitHub is computing statistics for this repository. Please try again in a moment.',
+      202,
+    )
+  }
+
   // Some endpoints (e.g. stargazers with star+json) return arrays or objects.
   const text = await res.text()
   if (!text) return undefined as T
@@ -368,6 +377,6 @@ export function classifyQuery(input: string): SearchKind {
   if (parseRepoInput(trimmed)) return 'repo'
   // Single token that's not a URL: treat as user/org search.
   if (/^https?:\/\//i.test(trimmed)) return 'search'
-  if (trimmed.includes('/')) return 'repo'
+  if (trimmed.includes('/')) return 'search'
   return 'user'
 }

@@ -79,7 +79,7 @@ export interface GitHubContributor {
 export interface GitHubCommit {
   sha: string
   commit: {
-    author: { name: string; email: string; date: string }
+    author: { name: string; email: string; date: string } | null
     committer: { name: string; email: string; date: string }
     message: string
   }

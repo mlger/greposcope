@@ -28,6 +28,18 @@ const queryClient = new QueryClient({
 
 function CurrentView() {
   const view = useAppStore((s) => s.currentView)
+  const appliedDefault = React.useRef(false)
+
+  React.useEffect(() => {
+    if (!appliedDefault.current) {
+      appliedDefault.current = true
+      const { settings, setView } = useAppStore.getState()
+      if (settings.defaultView && settings.defaultView !== 'landing') {
+        setView(settings.defaultView)
+      }
+    }
+  }, [])
+
   // Lightweight cross-fade between views.
   return (
     <div key={view} className="animate-in fade-in-50 duration-150">

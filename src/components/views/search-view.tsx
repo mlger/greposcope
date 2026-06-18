@@ -73,7 +73,7 @@ export function SearchView() {
   const effectiveQuery = input.trim()
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['search', effectiveQuery, mode, sort, order, language],
+    queryKey: ['search', effectiveQuery, mode, sort, order, language, !!settings.githubToken],
     queryFn: async () => {
       if (!effectiveQuery) return { items: [] as GitHubRepo[], total: 0, kind: mode }
       const token = settings.githubToken || undefined
