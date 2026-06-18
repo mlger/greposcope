@@ -633,13 +633,13 @@ function DashboardHeader({
         topics: repo.topics,
       },
       exportedAt: new Date().toISOString(),
-      source: 'GrepScope',
+      source: 'Greposcope',
     }
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `GrepScope-${repo.owner.login}-${repo.name}.json`
+    a.download = `Greposcope-${repo.owner.login}-${repo.name}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

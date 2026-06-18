@@ -1,4 +1,4 @@
-// Central Zustand store for GrepScope app state: navigation, saved repos,
+// Central Zustand store for Greposcope app state: navigation, saved repos,
 // recent searches, comparison list, and persistent settings.
 
 'use client'
@@ -112,7 +112,7 @@ export const useAppStore = create<AppState>()(
         set({ settings: { ...get().settings, ...patch } }),
     }),
     {
-      name: 'GrepScope-store',
+      name: 'Greposcope-store',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         savedRepos: state.savedRepos,

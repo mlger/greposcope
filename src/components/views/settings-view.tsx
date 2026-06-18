@@ -79,7 +79,7 @@ export function SettingsView() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Appearance</CardTitle>
-          <CardDescription>Choose how GrepScope looks on this device.</CardDescription>
+          <CardDescription>Choose how Greposcope looks on this device.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -169,7 +169,7 @@ export function SettingsView() {
                 github.com/settings/tokens
                 <ExternalLink className="h-3 w-3" />
               </a>
-              . Public repo read access is sufficient for GrepScope.
+              . Public repo read access is sufficient for Greposcope.
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export function SettingsView() {
                 <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
                 Default landing view
               </Label>
-              <p className="text-xs text-muted-foreground">Which view GrepScope opens to.</p>
+              <p className="text-xs text-muted-foreground">Which view Greposcope opens to.</p>
             </div>
             <Select
               value={settings.defaultView}
@@ -275,11 +275,11 @@ export function SettingsView() {
       {/* About */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">About GrepScope</CardTitle>
+          <CardTitle className="text-base">About Greposcope</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            GrepScope is an open analytics dashboard for public GitHub repositories. It uses the
+            Greposcope is an open analytics dashboard for public GitHub repositories. It uses the
             GitHub REST API (v3), renders charts with Recharts, and stores user preferences
             locally via the browser's localStorage API.
           </p>
