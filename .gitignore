@@ -46,6 +46,7 @@ local-*
 *.log
 dev.log
 dev.out.log
+.zscripts/dev.pid
 test
 prompt
 
