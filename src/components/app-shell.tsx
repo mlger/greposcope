@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes'
 import {
   Github,
   Search,
+  TrendingUp,
   LayoutDashboard,
   User,
   GitCompareArrows,
@@ -38,6 +39,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'landing', label: 'Home', icon: Home },
   { id: 'search', label: 'Search', icon: Search },
+  { id: 'trending', label: 'Trending', icon: TrendingUp },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'profile', label: 'User Profile', icon: User },
   { id: 'compare', label: 'Compare', icon: GitCompareArrows },

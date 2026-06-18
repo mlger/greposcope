@@ -292,6 +292,22 @@ export async function searchRepos(
   )
 }
 
+export async function getTrendingRepos(opts: {
+  language?: string
+  since?: 'day' | 'week' | 'month'
+  perPage?: number
+  token?: string
+}): Promise<SearchReposResult> {
+  const { language, since = 'week', perPage = 30, token } = opts
+  const daysBack = since === 'day' ? 1 : since === 'week' ? 7 : 30
+  const date = new Date()
+  date.setDate(date.getDate() - daysBack)
+  const dateStr = date.toISOString().slice(0, 10)
+  let q = `stars:>10 created:>${dateStr}`
+  if (language) q += ` language:${language}`
+  return searchRepos({ q, sort: 'stars', order: 'desc', perPage, token })
+}
+
 // ---------- Parsing helpers ----------
 
 export interface ParsedRepoIdentifier {

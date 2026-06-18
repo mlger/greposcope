@@ -124,6 +124,7 @@ export interface GitHubWeeklyCommitActivity {
 export type ViewId =
   | 'landing'
   | 'search'
+  | 'trending'
   | 'dashboard'
   | 'profile'
   | 'compare'

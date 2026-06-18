@@ -11,6 +11,7 @@ import { ProfileView } from '@/components/views/profile-view'
 import { CompareView } from '@/components/views/compare-view'
 import { SavedView } from '@/components/views/saved-view'
 import { SettingsView } from '@/components/views/settings-view'
+import { TrendingView } from '@/components/views/trending-view'
 
 // Single shared QueryClient for the SPA. We keep retries off because GitHub
 // rate-limit errors should surface to the user immediately rather than burn
@@ -32,6 +33,7 @@ function CurrentView() {
     <div key={view} className="animate-in fade-in-50 duration-150">
       {view === 'landing' && <LandingView />}
       {view === 'search' && <SearchView />}
+      {view === 'trending' && <TrendingView />}
       {view === 'dashboard' && <DashboardView />}
       {view === 'profile' && <ProfileView />}
       {view === 'compare' && <CompareView />}
