@@ -12,6 +12,7 @@ import { CompareView } from '@/components/views/compare-view'
 import { SavedView } from '@/components/views/saved-view'
 import { SettingsView } from '@/components/views/settings-view'
 import { TrendingView } from '@/components/views/trending-view'
+import { TopicsView } from '@/components/views/topics-view'
 
 // Single shared QueryClient for the SPA. We keep retries off because GitHub
 // rate-limit errors should surface to the user immediately rather than burn
@@ -46,6 +47,7 @@ function CurrentView() {
       {view === 'landing' && <LandingView />}
       {view === 'search' && <SearchView />}
       {view === 'trending' && <TrendingView />}
+      {view === 'topics' && <TopicsView />}
       {view === 'dashboard' && <DashboardView />}
       {view === 'profile' && <ProfileView />}
       {view === 'compare' && <CompareView />}

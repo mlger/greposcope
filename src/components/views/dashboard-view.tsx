@@ -26,6 +26,8 @@ import {
   GitPullRequest,
   RefreshCw,
   Layers,
+  Package,
+  GitMerge,
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import {
@@ -33,6 +35,8 @@ import {
   getRepoLanguages,
   getRepoContributors,
   getRepoIssues,
+  getRepoPullRequests,
+  getRepoReleases,
   getRepoCommits,
   getRepoCommitActivity,
   getStargazerSample,
@@ -48,7 +52,7 @@ import {
   activityLevelLabel,
   buildShareLink,
 } from '@/lib/utils'
-import type { GitHubRepo, SavedRepo } from '@/lib/types'
+import type { GitHubRepo, GitHubRelease, GitHubPullRequest, SavedRepo } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -60,6 +64,7 @@ import {
   StatCard,
   RepoCardSkeleton,
   ErrorState,
+  EmptyState,
   LoadingState,
   CopyButton,
 } from '@/components/repo/common'
@@ -132,6 +137,26 @@ function Dashboard({
     retry: false,
   })
 
+  const prsOpenQuery = useQuery({
+    queryKey: ['repo-prs-open', owner, repo, !!token],
+    queryFn: () => getRepoPullRequests(owner, repo, 'open', token || undefined, 100),
+    staleTime: 60_000,
+    retry: false,
+  })
+  const prsClosedQuery = useQuery({
+    queryKey: ['repo-prs-closed', owner, repo, !!token],
+    queryFn: () => getRepoPullRequests(owner, repo, 'closed', token || undefined, 100),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const releasesQuery = useQuery({
+    queryKey: ['repo-releases', owner, repo, !!token],
+    queryFn: () => getRepoReleases(owner, repo, token || undefined, 10),
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+
   const commitsQuery = useQuery({
     queryKey: ['repo-commits', owner, repo, !!token],
     queryFn: () => getRepoCommits(owner, repo, token || undefined, 100),
@@ -191,6 +216,9 @@ function Dashboard({
     commitsQuery.refetch()
     activityQuery.refetch()
     starsQuery.refetch()
+    prsOpenQuery.refetch()
+    prsClosedQuery.refetch()
+    releasesQuery.refetch()
     toast.success('Refreshing data…')
   }
 
@@ -319,6 +347,8 @@ function Dashboard({
           <TabsTrigger value="contributors">Contributors</TabsTrigger>
           <TabsTrigger value="languages">Languages</TabsTrigger>
           <TabsTrigger value="issues">Issues</TabsTrigger>
+          <TabsTrigger value="pull-requests">Pull Requests</TabsTrigger>
+          <TabsTrigger value="releases">Releases</TabsTrigger>
           <TabsTrigger value="commits">Commits</TabsTrigger>
         </TabsList>
 
@@ -501,6 +531,27 @@ function Dashboard({
             open={issuesOpenQuery.data ?? []}
             closed={issuesClosedQuery.data ?? []}
             loading={issuesOpenQuery.isLoading || issuesClosedQuery.isLoading}
+          />
+        </TabsContent>
+
+        {/* Pull Requests tab */}
+        <TabsContent value="pull-requests" className="mt-4">
+          <PullRequestsPanel
+            open={prsOpenQuery.data ?? []}
+            closed={prsClosedQuery.data ?? []}
+            loading={prsOpenQuery.isLoading || prsClosedQuery.isLoading}
+            error={prsOpenQuery.isError || prsClosedQuery.isError}
+            onRetry={() => { prsOpenQuery.refetch(); prsClosedQuery.refetch() }}
+          />
+        </TabsContent>
+
+        {/* Releases tab */}
+        <TabsContent value="releases" className="mt-4">
+          <ReleasesTimeline
+            releases={releasesQuery.data ?? []}
+            loading={releasesQuery.isLoading}
+            error={releasesQuery.isError}
+            onRetry={() => releasesQuery.refetch()}
           />
         </TabsContent>
 
@@ -847,6 +898,262 @@ function CommitsTable({
             ))}
           </ul>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PullRequestsPanel({
+  open,
+  closed,
+  loading,
+  error,
+  onRetry,
+}: {
+  open: GitHubPullRequest[]
+  closed: GitHubPullRequest[]
+  loading: boolean
+  error: boolean
+  onRetry: () => void
+}) {
+  const [tab, setTab] = React.useState<'open' | 'closed'>('open')
+
+  if (loading) return <Skeleton className="h-64 w-full" />
+  if (error) {
+    return <ErrorState message="Could not load pull requests." onRetry={onRetry} />
+  }
+
+  const totalOpen = open.length
+  const totalClosed = closed.length
+  const totalPRs = totalOpen + totalClosed
+  const mergeRate =
+    totalPRs === 0
+      ? null
+      : Math.round((closed.filter((pr) => pr.merged_at !== null).length / totalPRs) * 100)
+
+  const mergedPRs = closed.filter((pr) => pr.merged_at && pr.created_at)
+  const avgMergeDays =
+    mergedPRs.length === 0
+      ? null
+      : Math.round(
+          mergedPRs.reduce((sum, pr) => {
+            const ms = new Date(pr.merged_at!).getTime() - new Date(pr.created_at).getTime()
+            return sum + ms / (1000 * 60 * 60 * 24)
+          }, 0) / mergedPRs.length,
+        )
+
+  const openPct = totalPRs > 0 ? Math.round((totalOpen / totalPRs) * 100) : 50
+  const list = tab === 'open' ? open : closed
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard label="Open PRs" value={formatNumber(totalOpen)} icon={GitPullRequest} />
+        <StatCard label="Closed PRs" value={formatNumber(totalClosed)} icon={GitMerge} />
+        <StatCard
+          label="Merge rate"
+          value={mergeRate !== null ? `${mergeRate}%` : 'N/A'}
+          icon={GitMerge}
+          hint="Closed PRs that were merged"
+        />
+        <StatCard
+          label="Avg. merge time"
+          value={avgMergeDays !== null ? `${avgMergeDays}d` : 'N/A'}
+          icon={Activity}
+          hint="Days from open to merge"
+        />
+      </div>
+
+      {totalPRs > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground">
+            Open vs closed ratio ({openPct}% open)
+          </p>
+          <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-l-full bg-amber-500 transition-all"
+              style={{ width: `${openPct}%` }}
+            />
+            <div className="h-full flex-1 rounded-r-full bg-emerald-500" />
+          </div>
+          <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+              {totalOpen} open
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+              {totalClosed} closed
+            </span>
+          </div>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Pull Requests</CardTitle>
+            <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'closed')}>
+              <TabsList>
+                <TabsTrigger value="open">Open ({totalOpen})</TabsTrigger>
+                <TabsTrigger value="closed">Closed ({totalClosed})</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="max-h-[420px] overflow-y-auto scroll-thin">
+            {list.length === 0 ? (
+              <div className="grid h-32 place-items-center text-sm text-muted-foreground">
+                {totalPRs === 0
+                  ? 'No pull requests found for this repository.'
+                  : `No ${tab} pull requests in sample.`}
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {list.map((pr) => (
+                  <li key={pr.id} className="px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <GitPullRequest
+                        className={cn(
+                          'mt-0.5 h-3.5 w-3.5 shrink-0',
+                          pr.merged_at
+                            ? 'text-violet-500'
+                            : pr.state === 'open'
+                            ? 'text-emerald-500'
+                            : 'text-red-400',
+                        )}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <a
+                          href={pr.html_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-medium hover:underline"
+                        >
+                          {pr.title}
+                        </a>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          #{pr.number} opened {formatRelativeTime(pr.created_at)} by @{pr.user.login}
+                          {pr.merged_at && <> · merged {formatRelativeTime(pr.merged_at)}</>}
+                          {pr.draft && (
+                            <>
+                              {' '}
+                              · <Badge variant="outline" className="text-[10px]">Draft</Badge>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function ReleasesTimeline({
+  releases,
+  loading,
+  error,
+  onRetry,
+}: {
+  releases: GitHubRelease[]
+  loading: boolean
+  error: boolean
+  onRetry: () => void
+}) {
+  if (loading) return <Skeleton className="h-64 w-full" />
+  if (error) {
+    return <ErrorState message="Could not load releases." onRetry={onRetry} />
+  }
+
+  if (releases.length === 0) {
+    return (
+      <EmptyState
+        title="No releases published yet"
+        message="This repository has not published any releases on GitHub."
+        icon={Package}
+      />
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Release History</CardTitle>
+        <CardDescription>
+          {releases.length} most recent release{releases.length !== 1 ? 's' : ''}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ol className="relative divide-y">
+          {releases.map((release, idx) => {
+            const totalDownloads = release.assets.reduce(
+              (sum, asset) => sum + asset.download_count,
+              0,
+            )
+            const isLatest = idx === 0 && !release.prerelease && !release.draft
+            return (
+              <li key={release.id} className="flex items-start gap-4 px-4 py-4">
+                <div className="relative flex flex-col items-center">
+                  <div
+                    className={cn(
+                      'mt-1 h-2.5 w-2.5 shrink-0 rounded-full',
+                      release.prerelease
+                        ? 'bg-amber-400'
+                        : release.draft
+                        ? 'bg-muted-foreground'
+                        : 'bg-emerald-500',
+                    )}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href={release.html_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-semibold hover:underline"
+                    >
+                      {release.name || release.tag_name}
+                    </a>
+                    <code className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {release.tag_name}
+                    </code>
+                    {isLatest && (
+                      <Badge variant="secondary" className="text-[10px]">Latest</Badge>
+                    )}
+                    {release.prerelease && (
+                      <Badge variant="outline" className="border-amber-400 text-[10px] text-amber-600">
+                        Pre-release
+                      </Badge>
+                    )}
+                    {release.draft && (
+                      <Badge variant="outline" className="text-[10px]">Draft</Badge>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Published{' '}
+                    {release.published_at ? formatRelativeTime(release.published_at) : 'unknown'}
+                    {release.published_at && <> · {formatDate(release.published_at)}</>}
+                  </p>
+                  {totalDownloads > 0 && (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <Package className="h-3 w-3" />
+                      {formatNumber(totalDownloads)} total downloads across {release.assets.length}{' '}
+                      asset{release.assets.length !== 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ol>
       </CardContent>
     </Card>
   )

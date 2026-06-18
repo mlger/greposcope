@@ -120,11 +120,48 @@ export interface GitHubWeeklyCommitActivity {
   days: number[] // 7 entries, Sun..Sat
 }
 
+export interface GitHubPullRequest {
+  id: number
+  number: number
+  title: string
+  state: 'open' | 'closed'
+  created_at: string
+  updated_at: string
+  closed_at: string | null
+  merged_at: string | null
+  user: GitHubUser
+  html_url: string
+  draft: boolean
+}
+
+export interface GitHubReleaseAsset {
+  id: number
+  name: string
+  download_count: number
+  size: number
+  content_type: string
+}
+
+export interface GitHubRelease {
+  id: number
+  tag_name: string
+  name: string | null
+  body: string | null
+  draft: boolean
+  prerelease: boolean
+  created_at: string
+  published_at: string | null
+  html_url: string
+  assets: GitHubReleaseAsset[]
+  author: GitHubUser
+}
+
 // App-level view identifiers used by the single-page router.
 export type ViewId =
   | 'landing'
   | 'search'
   | 'trending'
+  | 'topics'
   | 'dashboard'
   | 'profile'
   | 'compare'

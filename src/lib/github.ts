@@ -6,6 +6,8 @@ import type {
   GitHubContributor,
   GitHubIssue,
   GitHubLanguageMap,
+  GitHubPullRequest,
+  GitHubRelease,
   GitHubRepo,
   GitHubUser,
   GitHubWeeklyCommitActivity,
@@ -173,6 +175,33 @@ export async function getRepoIssues(
   )
   // Filter out PRs (GitHub's /issues endpoint also returns PRs).
   return Array.isArray(data) ? data.filter((i) => !i.pull_request) : []
+}
+
+export async function getRepoPullRequests(
+  owner: string,
+  repo: string,
+  state: 'open' | 'closed' | 'all',
+  token?: string,
+  perPage = 100,
+): Promise<GitHubPullRequest[]> {
+  const data = await ghFetch<GitHubPullRequest[]>(
+    `/repos/${owner}/${repo}/pulls`,
+    { token, params: { state, per_page: perPage, sort: 'created', direction: 'desc' } },
+  )
+  return Array.isArray(data) ? data : []
+}
+
+export async function getRepoReleases(
+  owner: string,
+  repo: string,
+  token?: string,
+  perPage = 10,
+): Promise<GitHubRelease[]> {
+  const data = await ghFetch<GitHubRelease[]>(
+    `/repos/${owner}/${repo}/releases`,
+    { token, params: { per_page: perPage } },
+  )
+  return Array.isArray(data) ? data : []
 }
 
 export async function getRepoCommits(
