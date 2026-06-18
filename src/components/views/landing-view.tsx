@@ -115,7 +115,7 @@ export function LandingView() {
             Explore GitHub repositories <span className="brand-gradient">with clarity.</span>
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-base text-muted-foreground md:text-lg">
-            RepoScope turns raw GitHub data into clear, fast, and shareable
+            GrepScope turns raw GitHub data into clear, fast, and shareable
             insights — contributors, commits, issues, languages, and a
             transparent health score, all in one developer-focused dashboard.
           </p>

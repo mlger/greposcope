@@ -17,7 +17,7 @@ import {
   Menu,
   Sun,
   Moon,
-  Star,
+  GitBranch,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
@@ -53,11 +53,11 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2">
       <div className="grid h-8 w-8 place-items-center rounded-md bg-foreground text-background">
-        <Star className="h-4 w-4 fill-current" />
+        <GitBranch className="h-4 w-4" />
       </div>
       {!compact && (
         <span className="text-base font-semibold tracking-tight brand-gradient">
-          RepoScope
+          GrepScope
         </span>
       )}
     </div>
@@ -221,7 +221,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavList currentView={currentView} />
           <div className="px-3 pb-3 pt-2">
             <div className="rounded-md border bg-background/50 p-3 text-xs text-muted-foreground">
-              <p className="font-medium text-foreground">About RepoScope</p>
+              <p className="font-medium text-foreground">About GrepScope</p>
               <p className="mt-1 leading-relaxed">
                 Analytics for any public GitHub repository. Add a personal
                 access token in Settings to raise rate limits.
@@ -295,7 +295,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <footer className="mt-auto border-t bg-background px-4 py-3 text-xs text-muted-foreground">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span>
-                RepoScope · Built with Next.js, Tailwind, Recharts · Data from
+                GrepScope · Built with Next.js, Tailwind, Recharts · Data from
                 GitHub REST API
               </span>
               <span>

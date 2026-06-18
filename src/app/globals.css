@@ -63,7 +63,7 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  /* RepoScope accent: emerald-forward but neutral */
+  /* GrepScope accent: emerald-forward but neutral */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -167,7 +167,7 @@
   border-color: var(--foreground);
 }
 
-/* Animated gradient text used for the RepoScope wordmark. */
+/* Animated gradient text used for the GrepScope wordmark. */
 .brand-gradient {
   background: linear-gradient(120deg, var(--foreground), var(--muted-foreground), var(--foreground));
   background-size: 200% 100%;

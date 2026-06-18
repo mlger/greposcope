@@ -1,4 +1,4 @@
-// Shared TypeScript types for GitHub entities used across RepoScope.
+// Shared TypeScript types for GitHub entities used across GrepScope.
 
 export interface GitHubRepo {
   id: number

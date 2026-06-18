@@ -261,7 +261,7 @@ export function activityLevelLabel(commitCount: number): {
 
 /** Build a shareable URL for a repository dashboard view. */
 export function buildShareLink(owner: string, repo: string): string {
-  if (typeof window === 'undefined') return `https://reposcope.app/?repo=${owner}/${repo}`
+  if (typeof window === 'undefined') return `https://GrepScope.app/?repo=${owner}/${repo}`
   const url = new URL(window.location.href)
   url.hash = `#/dashboard/${owner}/${repo}`
   return url.toString()

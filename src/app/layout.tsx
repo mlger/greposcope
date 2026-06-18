@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'RepoScope — Explore GitHub repositories with clarity',
+  title: 'GrepScope — Explore GitHub repositories with clarity',
   description:
-    'RepoScope is a GitHub repository explorer and analytics dashboard. Search, inspect, and analyze repositories, contributors, commits, issues, and languages.',
+    'GrepScope is a GitHub repository explorer and analytics dashboard. Search, inspect, and analyze repositories, contributors, commits, issues, and languages.',
   keywords: [
     'GitHub',
     'repository analytics',
@@ -26,12 +26,12 @@ export const metadata: Metadata = {
     'commit activity',
     'language breakdown',
     'repo comparison',
-    'RepoScope',
+    'GrepScope',
   ],
-  authors: [{ name: 'RepoScope' }],
+  authors: [{ name: 'GrepScope' }],
   icons: { icon: '/logo.svg' },
   openGraph: {
-    title: 'RepoScope',
+    title: 'GrepScope',
     description: 'Explore GitHub repositories with clarity.',
     type: 'website',
   },
